@@ -1,13 +1,21 @@
+UNAME_S = $(shell uname -s)
+
 clean:
 	vagrant destroy --force
-	rm cloud-init.iso
+	rm minion.iso || true
+	rm master.iso || true
 
-cloud-init.iso: config/user-data config/meta-data
-	rm cloud-init.iso || true
-	hdiutil makehybrid -o cloud-init.iso -hfs -joliet -iso -default-volume-name cidata config/
-	# If you are on Linux, you need to replace the above with:
-	# genisoimage -output cloud-init.iso -volid cidata -joliet -rock config/user-data config/meta-data
+%.iso: %/user-data %/meta-data
+	rm $@ || true
+ifeq ($(UNAME_S),Darwin)
+	hdiutil makehybrid -o $@ -hfs -joliet -iso -default-volume-name cidata $*
+endif
+ifeq ($(UNAME_S),Linux)
+	genisoimage -output $@ -volid cidata -joliet -rock $*/user-data $*/meta-data
+endif
 
-up: cloud-init.iso
+up: minion.iso master.iso
+	vagrant plugin list | grep landrush > /dev/null; \
+		if [ $$? -ne 0 ]; then vagrant plugin install landrush; fi
 	vagrant up
 

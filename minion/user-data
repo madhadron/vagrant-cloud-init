@@ -1,0 +1,3 @@
+#!/bin/bash
+curl -o install_salt.sh -L https://bootstrap.saltstack.com
+sudo sh install_salt.sh git develop
